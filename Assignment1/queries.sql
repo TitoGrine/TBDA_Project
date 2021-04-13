@@ -50,24 +50,26 @@ SELECT DISTINCT
 FROM 
     XUCS uc
 WHERE
-    uc.curso NOT IN(
-    SELECT DISTINCT
-        ctp.curso
-    FROM
-        curso_tipo_permutations ctp
-    WHERE
-        (ctp.curso, ctp.tipo) NOT IN (
-            SELECT
-                ucs.curso,
-                tipo.tipo
+    uc.curso NOT IN (
+        SELECT DISTINCT
+            ctp.curso
+        FROM (
+            SELECT DISTINCT
+                curso,
+                tipo
             FROM
-                XUCS ucs
-            JOIN
-                XTIPOSAULA tipo ON
-                    tipo.codigo = ucs.codigo
-            GROUP BY
-                ucs.curso,
-                tipo.tipo))
+                XUCS,
+                XTIPOSAULA) ctp
+        WHERE
+            (ctp.curso, ctp.tipo) NOT IN (
+                SELECT DISTINCT
+                    ucs.curso,
+                    tipo.tipo
+                FROM
+                    XUCS ucs
+                JOIN
+                    XTIPOSAULA tipo ON
+                        tipo.codigo = ucs.codigo))
 ORDER BY
     uc.curso;
 
