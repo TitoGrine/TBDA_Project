@@ -1,3 +1,4 @@
+# Question 2
 ## Query
 ```sql
 SELECT
