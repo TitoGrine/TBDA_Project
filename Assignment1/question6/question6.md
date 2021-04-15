@@ -106,4 +106,17 @@ This execution plan is exactly the same as the above and the reasons are the sam
 
 By using the same indexes from option A we achieve drastically different results. Not only the query runs in approximately 24 seconds, but also the cost of the query is 5 times lower. Note that even the estimated cardinality is much more close to the real result of 5 rows (this plan estimates 54 while the last two expected 114).  
 The reason is clear: we are only accessing indexes, which are much smaller than corresponding tables. This makes a big difference especially for Select 2 that had to calculate a cartesian product between two tables. The Sort-Merge Join is carried out pretty much in the same way, but the indexes are much faster to sort due to their sizes.  
-Interestingly enough, the plan for Select 1 changes quite a bit. The optimizer prefers to access both indexes through Fast Full Scans and merge them through a Semi Hash Join. A semi join stops when the first hit is encountered.
+Interestingly enough, the plans for Selects 1 and 3 change quite a bit. This happens due to a major refactor on the way Select 3 is computed. Instead of using a Sort-Merge Join to join the results of Selects 1 and 2, the optimizer converts the NOT IN operation on a NOT EXISTS for these two tables. The whole Filter Predicate is hard to understand, but it seems the optimizer is binding the CURSO and TIPO values in a variable and iterating over the tables to guarantee the deletion of duplicates for Select 3.  
+Something similar happens for Select 1. The optimizer prefers to access both indexes through Fast Full Scans and merge them through a Semi Hash Join. The indexes are filtered to remove duplicates even before the join operation. A semi join stops when the first hit is encountered, which makes sense since both indexes do not contain duplicate values. This way, the optimizer can calculate the buckets for the index ZTIPOSAULA_IDX_CODIGO_TIPO (where there are many TIPOs for the same CODIGO) and then go through the index ZUCS_IDX_CURSO_CODIGO (where there is only one CURSO for each CODIGO) to find the first bucket with a match on CODIGO and stop there to save some time.  
+The Select 3 plan has already been explaining above. After its results are calculated, the last step is to merge them with the index on ZUCS through an Anti Hash Join. The Anti method will return the CURSOs that exist on the index but not on the result of Select 3. The Hash Join is obviously the best operation due to the equality condition used to match the two entities.
+Finally, an Hash operation is used to remove duplciates from the result, thus giving us the expected CURSOs. What an amazing optimization we achieved with this query.
+
+### Execution Time
+
+| X Schema | Y Schema | Z Schema |
+|----------|----------|----------|
+| 344s     | 321s     | 23s      |
+
+### References
+[Oracle Community - What does "2 - access("DEPARTMENT_ID"=:B1)" Mean](https://community.oracle.com/tech/developers/discussion/2512264/execution-plan-what-does-2-access-department-id-b1-mean)  
+[Ask Tom - Hash Join Semi](https://asktom.oracle.com/pls/apex/f?p=100:11:0::::P11_QUESTION_ID:561666200346114038)
