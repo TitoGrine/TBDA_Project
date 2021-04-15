@@ -111,11 +111,12 @@ Something similar happens for Select 1. The optimizer prefers to access both ind
 The Select 3 plan has already been explaining above. After its results are calculated, the last step is to merge them with the index on ZUCS through an Anti Hash Join. The Anti method will return the CURSOs that exist on the index but not on the result of Select 3. The Hash Join is obviously the best operation due to the equality condition used to match the two entities.
 Finally, an Hash operation is used to remove duplciates from the result, thus giving us the expected CURSOs. What an amazing optimization we achieved with this query.
 
-### Execution Time
+## Execution Times
 
-| X Schema | Y Schema | Z Schema |
-|----------|----------|----------|
-| 344s     | 321s     | 23s      |
+|          | X Schema | Y Schema | Z Schema |
+|----------|----------|----------|----------|
+| Option A | 344s     | 321s     | 23s      |
+| Option B | 0.036s   | 0.040s   | 0.036s   |
 
 ### References
 [Oracle Community - What does "2 - access("DEPARTMENT_ID"=:B1)" Mean](https://community.oracle.com/tech/developers/discussion/2512264/execution-plan-what-does-2-access-department-id-b1-mean)  
