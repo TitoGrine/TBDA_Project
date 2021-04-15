@@ -12,7 +12,7 @@ JOIN
     XTIPOSAULA tipo ON
         tipo.codigo = ucs.codigo
 WHERE
-    ucs.curso = 433 AND
+    ucs.curso = 233 AND
     tipo.ano_letivo = '2004/2005'
 GROUP BY
     ucs.curso,
