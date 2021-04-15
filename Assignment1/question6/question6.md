@@ -33,7 +33,7 @@ GROUP BY
 ### Execution Plans
 ![Execution Plan for X tables](optionA/execution-x.png "Execution Plan for X tables")
 
-In this query the usual "filter then join" method does not work. The filter applied in the HAVING clause has to be applied to the whole table returned by the nested SELECT. That is where the optimizer starts: it performs a Hash Join with two Full Table Scans to join XUCS with XTIPOSAULA. There is no way around it, the tables are too large (XTIPOSAULA has 21019 rows) so sorting them for a Sort Merge would cost too much and completely loading one of them to memory for a Nested Loops does not seem feasible. After the Hash Join, the values are filtered by the DISTINCT keywrod, which in practice means a hash function is used to place each unique value in a different bucket, discarding hash collisions, thus only saving each value once. Finally, the resulting values are group by CURSO so that the COUNT operation is performed only once per CURSO.  
+In this query the usual "filter then join" method does not work. The filter applied in the HAVING clause has to be applied to the whole table returned by the nested SELECT. That is where the optimizer starts: it performs a Hash Join with two Full Table Scans to join XUCS with XTIPOSAULA. There is no way around it, the tables are too large (XTIPOSAULA has 21019 rows) so sorting them for a Sort-Merge Join would cost too much and completely loading one of them to memory for a Nested Loops does not seem feasible. After the Hash Join, the values are filtered by the DISTINCT keyword, which in practice means a hash function is used to place each unique value in a different bucket, discarding hash collisions, thus only saving each value once. Finally, the resulting values are grouped by CURSO so that the COUNT operation is performed only once per CURSO.  
 Afterwards, the expression inside the HAVING clause has to be computed. The optimizer performs some manipulation on this expression that can be read on the "Filter Predicates" line of the execution plan. The DISTINCT keyword is replaced by a GROUP BY and an alias VM_NWVW_1 is used to refer to the selection made on XTIPOSAULA table. This selection is planned on the bottom of the execution plan. As we can see, the optimizer performs a Full Table Scan on XTIPOSAULA followed by a sort operation to separate the rows into different groups, each with the same value for the TIPO column. The resulting table is then aggregated by the COUNT operation and finally used to filter the XUCS and XTIPOSAULA join. After applying the filter, the optimizer ends up selecting the column CURSO for the resulting rows.
 
 ![Execution Plan for Y tables](optionA/execution-y.png "Execution Plan for Y tables")
@@ -46,7 +46,7 @@ That said we could clearly benefit from an index on both CODIGO and CURSO (by th
 As suggested in the analysis for environment Y, an index on both ZUCS.CODIGO and ZUCS.CURSO improves the query as we can see in the execution plan above. Since those are the only columns we need in this query from ZUCS, the need to get rows from the original table does no longer exist. Because of this the Hash Join is now performed on the index through a Fast Full Scan instead of a Full Table Scan on ZUCS, droping the cost from 13 to 6. This is already good and allows us to reuse an index that already existed from previous questions. However, there are only two more columns being used in the query: ZTIPOSAULA.CODIGO and ZTIPOSAULA.TIPO. By creating an index on both of these columns in the same order we can further optimize the query:
 
 ```sql
-CREATE INDEX ZTIPOSAULA_IDX_CODIGO_TIPO ON ZTIPOSAULA (CODIGO, TIPO)
+CREATE INDEX ZTIPOSAULA_IDX_CODIGO_TIPO ON ZTIPOSAULA (CODIGO, TIPO);
 ```
 
 ![Execution Plan for Z tables](optionA/execution-z-2.png "Execution Plan for Z tables")
@@ -109,14 +109,14 @@ The reason is clear: we are only accessing indexes, which are much smaller than 
 Interestingly enough, the plans for Selects 1 and 3 change quite a bit. This happens due to a major refactor on the way Select 3 is computed. Instead of using a Sort-Merge Join to join the results of Selects 1 and 2, the optimizer converts the NOT IN operation on a NOT EXISTS for these two tables. The whole Filter Predicate is hard to understand, but it seems the optimizer is binding the CURSO and TIPO values in a variable and iterating over the tables to guarantee the deletion of duplicates for Select 3.  
 Something similar happens for Select 1. The optimizer prefers to access both indexes through Fast Full Scans and merge them through a Semi Hash Join. The indexes are filtered to remove duplicates even before the join operation. A semi join stops when the first hit is encountered, which makes sense since both indexes do not contain duplicate values. This way, the optimizer can calculate the buckets for the index ZTIPOSAULA_IDX_CODIGO_TIPO (where there are many TIPOs for the same CODIGO) and then go through the index ZUCS_IDX_CURSO_CODIGO (where there is only one CURSO for each CODIGO) to find the first bucket with a match on CODIGO and stop there to save some time.  
 The Select 3 plan has already been explaining above. After its results are calculated, the last step is to merge them with the index on ZUCS through an Anti Hash Join. The Anti method will return the CURSOs that exist on the index but not on the result of Select 3. The Hash Join is obviously the best operation due to the equality condition used to match the two entities.
-Finally, an Hash operation is used to remove duplciates from the result, thus giving us the expected CURSOs. What an amazing optimization we achieved with this query.
+Finally, an Hash operation is used to remove duplicates from the result, thus giving us the expected CURSOs. What an amazing optimization we achieved with this query.
 
 ## Execution Times
 
 |          | X Schema | Y Schema | Z Schema |
 |----------|----------|----------|----------|
-| Option A | 344s     | 321s     | 23s      |
-| Option B | 0.036s   | 0.040s   | 0.036s   |
+| Option A | 0.036s   | 0.040s   | 0.036s   |
+| Option B | 344s     | 321s     | 23s      |
 
 ### References
 [Oracle Community - What does "2 - access("DEPARTMENT_ID"=:B1)" Mean](https://community.oracle.com/tech/developers/discussion/2512264/execution-plan-what-does-2-access-department-id-b1-mean)  

@@ -27,9 +27,9 @@ GROUP BY
 #### Execution Plan X
 ![Execution Plan for X tables](execution-x.png "Execution Plan for X tables")
 
-Starting off with X tables, the first step is to filter both XUCS and XTIPOSAULA tables to reduce their sizes and reduce the cost of the join operation. Since there are no indexes at all, especially on XUCS.curso and XTIPOSAULA.ANO_LETIVO, the only way to filter the tables is by performing a Full Table Scan and check each row of the table.  
+Starting off with environment X, the first step is to filter both XUCS and XTIPOSAULA tables to reduce their sizes and reduce the cost of the join operation. Since there are no indexes at all, especially on XUCS.CURSO and XTIPOSAULA.ANO_LETIVO, the only way to filter the tables is by performing a Full Table Scan and check each row of the table.  
 Note that filtering XTIPOSAULA returns 1671 rows, while the whole table has 21019 rows, which make the subsequent join much faster. However, this represents the hardest operation of the query, having a cost of 36.  
-When it comes to the join operation, there are some possibilities available. The system could have performed a Nested Loops Join or a Sort-Merge Join, but instead it chose a Hash Join. We believe the main reason is the filtered tables size. Since the tables are not small, to sort them might be too heavy and to have one of them totally in memory might be unfeasible. Hence, the Hash Join becomes the better with just a cost of 1 in this query.  
+When it comes to the join operation, there are some possibilities available. The system could have performed a Nested Loops Join or a Sort-Merge Join, but instead it chose a Hash Join. We believe the main reason is the filtered tables size. Since the tables are not small, to sort them might be too heavy and to have one of them totally in memory might be unfeasible. Hence, the Hash Join becomes the best solution with just a cost of 1 in this query.  
 Finally, since we need to GROUP BY our results, an Hash operation is executed to place all similiar (CURSO, ANO_LETIVO, TIPO) tuples in the same bucket and then summing the product of TURNOS by HORAS_TURNO in each of those buckets. A very interesting use for a hash function in our opinion!
 
 #### Execution Plan Y
