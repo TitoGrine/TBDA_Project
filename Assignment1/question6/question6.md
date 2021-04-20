@@ -39,7 +39,7 @@ Afterwards, the expression inside the HAVING clause has to be computed. The opti
 ![Execution Plan for Y tables](optionA/execution-y.png "Execution Plan for Y tables")
 
 This plan is exactly the same as the one for environment X. Although we now have an index on YUCS.CODIGO, that is not enough to optimize this query. The reason is that we need both YUCS.CURSO and YUCS.CODIGO for this query, so even if the optimizer used the index to make the join faster, it would need to afterwards join with the full YUCS table to get the CURSO column. Other way the optimizer could go was to access YUCS by Rowid after querying the index. However, since we need all rows from both tables, accessing the index would be a waste of time when it can directly scan the table and get all rows with all information.  
-That said we could clearly benefit from an index on both CODIGO and CURSO (by this order), thus completely eliminating the need to access the YUCS table. Apart from YUCS.CODIGO there is no other index available for this query, so there is nothing that could be further optimized in this execution plan.
+That said we could clearly benefit from an index on both CURSO and CODIGO (by this order), thus completely eliminating the need to access the YUCS table. Apart from YUCS.CODIGO there is no other index available for this query, so there is nothing that could be further optimized in this execution plan.
 
 ![Execution Plan for Z tables](optionA/execution-z-1.png "Execution Plan for Z tables")
 
@@ -61,7 +61,7 @@ This index has a bigger impact than the previous one because the table ZTIPOSAUL
 Overall, by using both proposed indexes (ZUCS_IDX_CURSO_CODIGO and ZTIPOSAULA_CODIGO_TIPO) we are able to cut the cost of the query in half. This would be a very important optimization if this query was very frequent on a running system.
 
 ## Option B
-Our second approach is way more complex. It is heavily based on set theory. We start by creating a set with all possible pairs of program and type of class. Afterwards, we subtract this set by the set of pairs which are actually stored on the database. The resulting set is made of all pairs that should to exist in order for all programs to have classes of all types. This means that the programs which already have all types of classes are removed by subtracting the two sets. Based on this, we subtract the set of all programs on the database by the set of programs that were part of the subtraction made before and we end up with the answer.  
+Our second approach is way more complex. It is heavily based on set theory. We start by creating a set with all possible pairs of program and type of class. Afterwards, we subtract this set by the set of pairs which are actually stored on the database. The resulting set is made of all pairs that should exist in order for all programs to have classes of all types. This means that the programs which already have all types of classes are removed by subtracting the two sets. Based on this, we subtract the set of all programs on the database by the set of programs that were part of the subtraction made before and we end up with the answer.  
 Translating this to SQL took a bit of effort, but the end result actually checks that the programs have every type instead of counting them. However, this query takes approximately 6 minutes to run, which is a lot slower than option A. 
 
 ### Query
@@ -69,7 +69,7 @@ Translating this to SQL took a bit of effort, but the end result actually checks
 SELECT DISTINCT -- Select 4
     uc.curso
 FROM 
-    XUCS uc
+    ZUCS uc
 WHERE
     uc.curso NOT IN (
         SELECT DISTINCT -- Select 3
@@ -79,17 +79,17 @@ WHERE
                 curso,
                 tipo
             FROM
-                XUCS,
-                XTIPOSAULA) ctp
+                ZUCS,
+                ZTIPOSAULA) ctp
         WHERE
             (ctp.curso, ctp.tipo) NOT IN (
                 SELECT DISTINCT -- Select 1
                     ucs.curso,
                     tipo.tipo
                 FROM
-                    XUCS ucs
+                    ZUCS ucs
                 JOIN
-                    XTIPOSAULA tipo ON
+                    ZTIPOSAULA tipo ON
                         tipo.codigo = ucs.codigo));
 ```
 
