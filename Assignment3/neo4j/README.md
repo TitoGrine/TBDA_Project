@@ -16,6 +16,6 @@ SELECT * FROM XUCS;
 
 ![](images/neo4j-project.png)
 
-3. Click the `Reveal files in File Explorer`, which will open a file browser window. Move the `.csv` files in the `data` folder and copy the `create.cypher` file to this folder.
+3. Move the `.csv` files in the `data` to the folder located on `path/to/.Neo4jDesktop/relate-data/dbmss/dbms-[new-project-hash]/import/`.
 
-4. Click the `Open` button on the `create.cypher` file, then press the start icon button.
+4. Run the `create.cypher` in the Neo4j browser
