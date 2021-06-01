@@ -8,6 +8,10 @@ CREATE (:uc
     curso: line.CURSO
   }
 );
+// create UC index for faster joins
+CREATE INDEX uc_codigo_idx IF NOT EXISTS
+FOR (u:uc)
+ON (u.codigo);
 
 // create ocorrencias
 LOAD CSV WITH HEADERS FROM 'file:///ocorrencias.csv' AS line
@@ -30,6 +34,10 @@ CREATE (o:ocorrencia
   }
 )
 CREATE (u)-[:contem]->(o);
+// create ocorrencia index for faster joins
+CREATE INDEX ocorrencia_composite_idx IF NOT EXISTS
+FOR (o:ocorrencia)
+ON (o.codigo, o.ano_letivo, o.periodo);
 
 // create tiposaula
 LOAD CSV WITH HEADERS FROM 'file:///tiposaula.csv' AS line
@@ -53,6 +61,10 @@ CREATE (t:tipoaula
   }
 )
 CREATE (o)-[:aulas]->(t);
+// create tipoaula index for faster joins
+CREATE INDEX tipoaula_id_idx IF NOT EXISTS
+FOR (t:tipoaula)
+ON (t.id);
 
 // create docentes
 LOAD CSV WITH HEADERS FROM 'file:///docentes.csv' AS line
@@ -67,15 +79,19 @@ CREATE (:docente
     estado: line.ESTADO
   }
 );
+// create tipoaula index for faster joins
+CREATE INDEX docente_nr_idx IF NOT EXISTS
+FOR (d:docente)
+ON (d.nr);
 
 // create dsd
 LOAD CSV WITH HEADERS FROM 'file:///dsd.csv' AS line
-MATCH (d:Docente // match foreign keys
+MATCH (d:docente // match foreign keys
   {
     nr: toInteger(line.NR)
   }
 )
-MATCH (t:TipoAula
+MATCH (t:tipoaula
   {
     id: toInteger(line.ID)
   }
