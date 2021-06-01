@@ -103,3 +103,7 @@ CREATE (d)-[:dsd
     ordem: toInteger(line.ORDEM)
   }
 ]->(t);
+
+
+// delete all nodes and relations
+MATCH (n) DETACH DELETE n;
