@@ -5,7 +5,7 @@ CREATE (:uc
     codigo: line.CODIGO,
     designacao: line.DESIGNACAO,
     sigla_uc: line.SIGLA_UC,
-    curso: line.CURSO
+    curso: toInteger(line.CURSO)
   }
 );
 // create UC index for faster joins
@@ -55,9 +55,9 @@ CREATE (t:tipoaula
     ano_letivo: line.ANO_LETIVO,
     periodo: line.PERIODO,
     codigo: line.CODIGO,
-    turnos: line.TURNOS,
-    n_aulas: line.N_AULAS,
-    horas_turno: line.HORAS_TURNO
+    turnos: toInteger(line.TURNOS),
+    n_aulas: toInteger(line.N_AULAS),
+    horas_turno: toInteger(line.HORAS_TURNO)
   }
 )
 CREATE (o)-[:aulas]->(t);
@@ -107,3 +107,55 @@ CREATE (d)-[:dsd
 
 // delete all nodes and relations
 MATCH (n) DETACH DELETE n;
+
+// a)
+// How  many  class  hours  of  each  type  did  the  program  233  got  in  year  2004/2005?
+MATCH (u:uc {curso: 233})-[:contem]->(o:ocorrencia {ano_letivo: '2004/2005'})-[:aulas]->(t:tipoaula)
+WITH u.curso as curso, o.ano_letivo as ano_letivo, t.tipo as tipo, sum(t.horas_turno * t.turnos) as sumHoras
+RETURN curso, ano_letivo, tipo, sumHoras
+
+// b)
+// Which  courses  (show  the  code,  total  class  hours  required,  total  classes  assigned)
+// have a difference between total class hours required and the service actually assigned in year 2003/2004?
+MATCH (u:uc)-[:contem]->(:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(:docente)
+WITH u.codigo as codigo, sum(t.horas_turno * t.turnos) as total_required, sum(ds.horas) as service_assigned
+WHERE total_required <> service_assigned
+RETURN codigo, total_required, service_assigned
+
+// c)
+// Who  is  the  professor  with  more  class  hours  for  each  type  of  class,  in  the  academic  year  2003/2004? 
+// Show  the  number  and  name  of  the  professor,  the  type of class and the total of class hours times the factor.
+MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
+RETURN nr, nome, tipo, total_horas
+
+CALL {
+  MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+  WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
+  RETURN nr, nome, tipo, total_horas
+}
+WITH apoc.agg.maxItems(total_horas, tipo) as cenas
+RETURN cenas
+
+MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
+ORDER BY tipo DESC, total_horas DESC
+RETURN nr, nome, tipo, collect(total_horas)[0] as 
+
+// d)
+// Which  is  the  average  number  of  hours  by  professor  by  year  in  each  category, 
+// in the years between 2001/2002 and 2004/2005?
+MATCH (o:ocorrencia)-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+WHERE o.ano_letivo IN ['2001/2002', '2002/2003', '2003/2004','2004/2005']
+WITH d.categoria as categoria, d.nome as nome, o.ano_letivo as ano_letivo, avg(ds.horas) as media_horas
+ORDER BY nome, ano_letivo
+RETURN categoria, nome, ano_letivo, media_horas
+
+// e)
+// Which  is  the  total  hours  per  week,  on  each  semester,  that  a 
+// hypothetical student enrolled in every course of a single curricular year from each program would get.
+MATCH (u:uc)-[:contem]->(o:ocorrencia {ano_letivo: '2009/2010'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+WHERE t.periodo in ['1S', '2S']
+WITH u.curso as curso, o.periodo as periodo, sum(t.horas_turno) as horas_semanais
+ORDER BY curso, periodo
+RETURN curso, periodo, horas_semanais;
