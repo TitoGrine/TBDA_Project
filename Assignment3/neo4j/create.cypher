@@ -154,7 +154,7 @@ RETURN categoria, nome, ano_letivo, media_horas
 // e)
 // Which  is  the  total  hours  per  week,  on  each  semester,  that  a 
 // hypothetical student enrolled in every course of a single curricular year from each program would get.
-MATCH (u:uc)-[:contem]->(o:ocorrencia {ano_letivo: '2009/2010'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
+MATCH (u:uc)-[:contem]->(o:ocorrencia {ano_letivo: '2009/2010'})-[:aulas]->(t:tipoaula)
 WHERE t.periodo in ['1S', '2S']
 WITH u.curso as curso, o.periodo as periodo, sum(t.horas_turno) as horas_semanais
 ORDER BY curso, periodo
