@@ -117,38 +117,32 @@ RETURN curso, ano_letivo, tipo, sumHoras
 // b)
 // Which  courses  (show  the  code,  total  class  hours  required,  total  classes  assigned)
 // have a difference between total class hours required and the service actually assigned in year 2003/2004?
-MATCH (u:uc)-[:contem]->(:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(:docente)
-WITH u.codigo as codigo, sum(t.horas_turno * t.turnos) as total_required, sum(ds.horas) as service_assigned
-ORDER BY codigo
-WHERE total_required <> service_assigned
-RETURN codigo, total_required, service_assigned
+MATCH (u1:uc)-[:contem]->(:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)
+WITH u1.codigo as codigo1, sum(t.horas_turno * t.turnos) as total_required
+MATCH (u2:uc)-[:contem]->(:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)
+OPTIONAL MATCH (t)<-[ds:dsd]-()
+WITH u2.codigo as codigo2, codigo1, round(sum(ds.horas), 10) as service_assigned, total_required
+WHERE codigo2 = codigo1 AND total_required <> service_assigned
+RETURN codigo2, total_required, service_assigned
+ORDER BY codigo2
 
 // c)
 // Who  is  the  professor  with  more  class  hours  for  each  type  of  class,  in  the  academic  year  2003/2004? 
 // Show  the  number  and  name  of  the  professor,  the  type of class and the total of class hours times the factor.
-MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
-WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
-RETURN nr, nome, tipo, total_horas
-
-CALL {
-  MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
-  WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
-  RETURN nr, nome, tipo, total_horas
-}
-WITH apoc.agg.maxItems(total_horas, tipo) as cenas
-RETURN cenas
-
-MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
-WITH d.nr as nr, d.nome as nome, t.tipo as tipo, sum(ds.horas) as total_horas
-ORDER BY tipo DESC, total_horas DESC
-RETURN nr, nome, tipo, collect(total_horas)[0] as 
+MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t1:tipoaula)<-[ds1:dsd]-(d:docente)
+WITH d.nr as nr, d.nome as nome, t1.tipo as tipo1, sum(ds1.horas) as temp_total
+WITH tipo1, max(temp_total) as max_total
+MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t2:tipoaula)<-[ds2:dsd]-(d2:docente)
+WITH d2.nr as nr, d2.nome as nome, tipo1, t2.tipo as tipo2, sum(ds2.horas) as total_horas, max_total
+WHERE tipo1 = tipo2 AND total_horas = max_total
+RETURN nr, nome, tipo1, total_horas
 
 // d)
 // Which  is  the  average  number  of  hours  by  professor  by  year  in  each  category, 
 // in the years between 2001/2002 and 2004/2005?
 MATCH (o:ocorrencia)-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
-WHERE o.ano_letivo IN ['2001/2002', '2002/2003', '2003/2004','2004/2005']
-WITH d.categoria as categoria, d.nome as nome, o.ano_letivo as ano_letivo, avg(ds.horas) as media_horas
+WHERE o.ano_letivo IN ['2001/2002', '2002/2003', '2003/2004','2004/2005'] AND d.categoria IS NOT NULL
+WITH d.categoria as categoria, d.nr as nr, d.nome as nome, o.ano_letivo as ano_letivo, avg(ds.horas) as media_horas
 ORDER BY nome, ano_letivo
 RETURN categoria, nome, ano_letivo, media_horas
 
