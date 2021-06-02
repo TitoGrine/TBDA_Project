@@ -55,9 +55,9 @@ CREATE (t:tipoaula
     ano_letivo: line.ANO_LETIVO,
     periodo: line.PERIODO,
     codigo: line.CODIGO,
-    turnos: toInteger(line.TURNOS),
+    turnos: toFloat(line.TURNOS),
     n_aulas: toInteger(line.N_AULAS),
-    horas_turno: toInteger(line.HORAS_TURNO)
+    horas_turno: toFloat(line.HORAS_TURNO)
   }
 )
 CREATE (o)-[:aulas]->(t);
@@ -98,8 +98,8 @@ MATCH (t:tipoaula
 )
 CREATE (d)-[:dsd
   {
-    horas: toInteger(line.HORAS),
-    fator: toInteger(line.FATOR),
+    horas: toFloat(line.HORAS),
+    fator: toFloat(line.FATOR),
     ordem: toInteger(line.ORDEM)
   }
 ]->(t);
@@ -119,6 +119,7 @@ RETURN curso, ano_letivo, tipo, sumHoras
 // have a difference between total class hours required and the service actually assigned in year 2003/2004?
 MATCH (u:uc)-[:contem]->(:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t:tipoaula)<-[ds:dsd]-(:docente)
 WITH u.codigo as codigo, sum(t.horas_turno * t.turnos) as total_required, sum(ds.horas) as service_assigned
+ORDER BY codigo
 WHERE total_required <> service_assigned
 RETURN codigo, total_required, service_assigned
 
