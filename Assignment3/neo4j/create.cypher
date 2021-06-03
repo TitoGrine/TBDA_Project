@@ -163,7 +163,5 @@ RETURN curso, periodo, horas_semanais;
 MATCH
   (prof:docente {nome: 'Gabriel de Sousa Torcato David'}),
   (tbda:uc {designacao: 'Tecnologias de Bases de Dados'}),
-  path = allShortestPaths((prof)-[*..15]-(tbda))
+  path = (prof)-[*..5]-(tbda)
 return path;
-
-
