@@ -112,7 +112,7 @@ MATCH (n) DETACH DELETE n;
 // How  many  class  hours  of  each  type  did  the  program  233  got  in  year  2004/2005?
 MATCH (u:uc {curso: 233})-[:contem]->(o:ocorrencia {ano_letivo: '2004/2005'})-[:aulas]->(t:tipoaula)
 WITH u.curso as curso, o.ano_letivo as ano_letivo, t.tipo as tipo, sum(t.horas_turno * t.turnos) as sumHoras
-RETURN curso, ano_letivo, tipo, sumHoras
+RETURN curso, ano_letivo, tipo, sumHoras;
 
 // b)
 // Which  courses  (show  the  code,  total  class  hours  required,  total  classes  assigned)
@@ -124,18 +124,18 @@ OPTIONAL MATCH (t)<-[ds:dsd]-()
 WITH u2.codigo as codigo2, codigo1, round(sum(ds.horas), 10) as service_assigned, total_required
 WHERE codigo2 = codigo1 AND total_required <> service_assigned
 RETURN codigo2, total_required, service_assigned
-ORDER BY codigo2
+ORDER BY codigo2;
 
 // c)
 // Who  is  the  professor  with  more  class  hours  for  each  type  of  class,  in  the  academic  year  2003/2004? 
 // Show  the  number  and  name  of  the  professor,  the  type of class and the total of class hours times the factor.
-MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t1:tipoaula)<-[ds1:dsd]-(d:docente)
-WITH d.nr as nr, d.nome as nome, t1.tipo as tipo1, sum(ds1.horas) as temp_total
+MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t1:tipoaula)<-[ds1:dsd]-(d1:docente)
+WITH d1.nr as nr, d1.nome as nome, t1.tipo as tipo1, sum(ds1.horas) as temp_total
 WITH tipo1, max(temp_total) as max_total
 MATCH (:ocorrencia {ano_letivo: '2003/2004'})-[:aulas]->(t2:tipoaula)<-[ds2:dsd]-(d2:docente)
 WITH d2.nr as nr, d2.nome as nome, tipo1, t2.tipo as tipo2, sum(ds2.horas) as total_horas, max_total
 WHERE tipo1 = tipo2 AND total_horas = max_total
-RETURN nr, nome, tipo1, total_horas
+RETURN nr, nome, tipo1, total_horas;
 
 // d)
 // Which  is  the  average  number  of  hours  by  professor  by  year  in  each  category, 
@@ -144,7 +144,7 @@ MATCH (o:ocorrencia)-[:aulas]->(t:tipoaula)<-[ds:dsd]-(d:docente)
 WHERE o.ano_letivo IN ['2001/2002', '2002/2003', '2003/2004','2004/2005'] AND d.categoria IS NOT NULL
 WITH d.categoria as categoria, d.nr as nr, d.nome as nome, o.ano_letivo as ano_letivo, avg(ds.horas) as media_horas
 ORDER BY nome, ano_letivo
-RETURN categoria, nome, ano_letivo, media_horas
+RETURN categoria, nome, ano_letivo, media_horas;
 
 // e)
 // Which  is  the  total  hours  per  week,  on  each  semester,  that  a 
@@ -154,3 +154,14 @@ WHERE t.periodo in ['1S', '2S']
 WITH u.curso as curso, o.periodo as periodo, sum(t.horas_turno) as horas_semanais
 ORDER BY curso, periodo
 RETURN curso, periodo, horas_semanais;
+
+// f)
+// Ask the database a query you think is interesting
+// Show the graph of the relations between Prof. Gabriel David and this course
+// We can see every occurence of 'Tecnologias de Bases de Dados' where Prof. Gabriel David
+// was present.
+MATCH
+  (prof:docente {nome: 'Gabriel de Sousa Torcato David'}),
+  (tbda:uc {designacao: 'Tecnologias de Bases de Dados'}),
+  path = (prof)-[*..5]-(tbda)
+return path;
