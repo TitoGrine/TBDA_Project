@@ -1,0 +1,55 @@
+[
+    {
+        "_id": 1296,
+        "tipo": "P",
+        "horas_turno": 2,
+        "n_aulas": null,
+        "turnos": 5,
+        "docentes": [
+            {
+                "horas": 6,
+                "ordem": 0,
+                "fator": 1,
+                "docente": {
+                    "nr": 236891,
+                    "nome": "Manuel Alberto Pereira Ricardo",
+                    "estado": "A",
+                    "apelido": "Pereira Ricardo",
+                    "proprio": "Manuel",
+                    "categoria": 110,
+                    "sigla": "MPR"
+                }
+            },
+            {
+                "horas": 4,
+                "ordem": 0,
+                "fator": 1,
+                "docente": {
+                    "nr": 901030,
+                    "nome": "Carlos Alberto Rodrigues e Silva",
+                    "estado": "NA",
+                    "apelido": "Silva",
+                    "proprio": "Carlos",
+                    "categoria": 11007,
+                    "sigla": "CRS"
+                }
+            }
+        ],
+        "ocorrencia": {
+            "ano_letivo": "1998/1999",
+            "periodo": "2S",
+            "inscritos": 92,
+            "conteudo": "Introdução à Comunicação de Dados - técnicas de comutação, modos de operação, serviços. Modelo OSI. Data Link - LAPB, LAPD, LAPF (Frame Relay). LANs / interligação de LANs. WANs (X.25). Internet (arquitectura TCP / IP).",
+            "objetivos": null,
+            "aprovados": 69,
+            "departamento": "DEEC",
+            "com_frequencia": 70,
+            "uc": {
+                "codigo": "EEC4261",
+                "sigla_uc": "CDRC1",
+                "designacao": "Comunicação de Dados e Redes de Computadores I",
+                "curso": 255
+            }
+        }
+    }
+]
