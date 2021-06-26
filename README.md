@@ -1,9 +1,9 @@
 # TBDA Project
 
-Assignments from TBDA (Database Technologies - 4rd year of Integrated Master Degree in Computer Engineering).
-For more information regarding the first assignment (Query Optimization) can be found [here]();
-For more information regarding the second assignment (Object Relational) can be found [here]();
-For more information regarding the third assignment (NoSQL) can be found [here]();
+Assignments from TBDA (Database Technologies - 4rd year of Integrated Master Degree in Computer Engineering).  
+For more information regarding the first assignment (Query Optimization) go [here](https://github.com/TitoGrine/TBDA_Project/tree/main/Assignment1).  
+For more information regarding the second assignment (Object Relational) go [here](https://github.com/TitoGrine/TBDA_Project/tree/main/Assignment2).  
+For more information regarding the third assignment (NoSQL) go [here](https://github.com/TitoGrine/TBDA_Project/tree/main/Assignment3).
 
 ### Course Information
 
